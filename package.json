@@ -1,0 +1,21 @@
+{
+  "name": "office-draft-assistant",
+  "version": "1.0.0",
+  "description": "AI assistant that drafts office letters, emails, notes and minutes from a few typed points.",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "docx": "^9.15.3",
+    "express": "^5.3.0"
+  }
+}

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Office Draft Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+      </span>
+      <div>
+        <h1>Office Draft Assistant</h1>
+        <p>Type a few points. Get a letter, email or note ready to send.</p>
+      </div>
+    </div>
+    <nav class="topbar-actions">
+      <button type="button" class="btn ghost" id="open-history">Recent drafts</button>
+      <button type="button" class="btn ghost" id="open-profile">Office profile</button>
+    </nav>
+  </header>
+
+  <div class="banner" id="key-banner" hidden>
+    <strong>One-time setup needed.</strong>
+    No Claude API key was found in the <code>.env</code> file yet. Copy <code>.env.example</code> to <code>.env</code>, paste your key in, and restart the app. The README has the steps.
+  </div>
+
+  <main class="layout">
+    <section class="panel" aria-labelledby="form-title">
+      <h2 id="form-title">What do you need?</h2>
+      <form id="draft-form" novalidate>
+        <label class="field">
+          <span>Document type</span>
+          <select id="docType" name="docType"></select>
+        </label>
+
+        <label class="field">
+          <span>To <em>optional</em></span>
+          <input type="text" id="recipient" name="recipient" maxlength="600" autocomplete="off"
+                 placeholder="e.g. The Executive Engineer, Testing Division, Nashik">
+        </label>
+
+        <label class="field">
+          <span>Subject <em>optional &ndash; written for you if left blank</em></span>
+          <input type="text" id="subject" name="subject" maxlength="300" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <span>Reference <em>optional</em></span>
+          <input type="text" id="reference" name="reference" maxlength="300" autocomplete="off"
+                 placeholder="e.g. Your letter no. EE/T/1234 dated 03.11.2026">
+        </label>
+
+        <label class="field">
+          <span>Key points</span>
+          <textarea id="points" name="points" rows="7" required></textarea>
+          <small>Rough notes are fine, in any language. Press Ctrl + Enter to generate.</small>
+        </label>
+
+        <details class="extra" id="background-box">
+          <summary>Paste a letter or email to reply to, or other background</summary>
+          <label class="field">
+            <span class="visually-hidden">Background text</span>
+            <textarea id="background" name="background" rows="6"
+                      placeholder="Paste the message you received, or any notes the draft should draw on."></textarea>
+          </label>
+        </details>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Tone</span>
+            <select id="tone" name="tone">
+              <option value="formal">Formal</option>
+              <option value="polite">Polite request</option>
+              <option value="firm">Firm / urgent</option>
+              <option value="friendly">Friendly</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Length</span>
+            <select id="length" name="length">
+              <option value="short">Short</option>
+              <option value="standard" selected>Standard</option>
+              <option value="detailed">Detailed</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Language</span>
+            <input type="text" id="language" name="language" list="languages" value="English" maxlength="60" autocomplete="off">
+            <datalist id="languages">
+              <option value="English"></option>
+              <option value="Hindi"></option>
+              <option value="Marathi"></option>
+              <option value="Gujarati"></option>
+            </datalist>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="generate">Generate draft</button>
+          <button type="button" class="btn ghost" id="clear-form">Clear</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel draft-panel" aria-labelledby="draft-title">
+      <div class="draft-head">
+        <h2 id="draft-title">Draft</h2>
+        <div class="draft-tools">
+          <button type="button" class="btn small" id="copy" disabled>Copy</button>
+          <button type="button" class="btn small" id="download" disabled>Download Word</button>
+          <button type="button" class="btn small" id="print" disabled>Print</button>
+        </div>
+      </div>
+
+      <div class="paper-wrap">
+        <textarea id="draft" class="paper" spellcheck="true" aria-label="Draft text"
+                  placeholder="Your draft will appear here. You can edit it directly before copying or downloading."></textarea>
+      </div>
+
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+
+      <div class="blanks" id="blanks" hidden>
+        <span id="blanks-text"></span>
+        <button type="button" class="btn small" id="next-blank">Go to next blank</button>
+      </div>
+
+      <form class="revise" id="revise-form">
+        <label for="instruction">Want it changed?</label>
+        <div class="revise-row">
+          <input type="text" id="instruction" maxlength="2000" autocomplete="off" disabled
+                 placeholder="e.g. make it shorter, add that work must finish before 30 November">
+          <button type="submit" class="btn" id="revise" disabled>Revise</button>
+          <button type="button" class="btn ghost" id="undo" hidden>Undo change</button>
+          <button type="button" class="btn danger" id="stop" hidden>Stop</button>
+        </div>
+        <div class="chips" id="chips">
+          <button type="button" class="chip" disabled>Make it shorter</button>
+          <button type="button" class="chip" disabled>More formal</button>
+          <button type="button" class="chip" disabled>More polite</button>
+          <button type="button" class="chip" disabled>Add urgency</button>
+          <button type="button" class="chip" disabled>Use simpler words</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footnote">
+    Drafts are written by AI. Read every draft and check names, dates, figures and equipment details before sending.
+  </footer>
+
+  <dialog id="profile-dialog" aria-labelledby="profile-title">
+    <form method="dialog" id="profile-form">
+      <h2 id="profile-title">Office profile</h2>
+      <p class="dialog-note">Used for the letterhead and signature. Saved in this browser only.</p>
+      <label class="field"><span>Your name</span><input type="text" name="name" maxlength="300" autocomplete="name"></label>
+      <label class="field"><span>Designation</span><input type="text" name="designation" maxlength="300" placeholder="e.g. Assistant Engineer"></label>
+      <label class="field"><span>Office / organisation</span><input type="text" name="office" maxlength="300" placeholder="e.g. 132 kV Substation, ..."></label>
+      <label class="field"><span>Office address</span><textarea name="address" rows="3" maxlength="600"></textarea></label>
+      <label class="field"><span>Phone / email</span><input type="text" name="contact" maxlength="300"></label>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="history-dialog" aria-labelledby="history-title">
+    <div class="dialog-body">
+      <h2 id="history-title">Recent drafts</h2>
+      <p class="dialog-note">The last 30 drafts, saved in this browser only.</p>
+      <ul class="history-list" id="history-list"></ul>
+      <p class="empty" id="history-empty" hidden>No drafts yet. They will appear here after you generate one.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost danger-text" id="clear-history">Delete all</button>
+        <button type="button" class="btn" data-close>Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="print-area" aria-hidden="true"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
